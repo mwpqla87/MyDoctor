@@ -13,6 +13,9 @@ public class CheckedList {
         this.listName = name;
         this.imageIcon = imageIcon;
     }
+
+
+
     public void setData(int data){
         this.data = data;
     }

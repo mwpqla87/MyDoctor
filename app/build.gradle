@@ -29,6 +29,7 @@ dependencies {
     compile 'com.android.support:design:25.3.1'
     compile 'com.android.support.constraint:constraint-layout:1.0.2'
     compile 'com.jellygom:miband-sdk:0.2.1'
+    compile 'com.github.PhilJay:MPAndroidChart:v3.0.1'
 
     compile files('libs/d2xx.jar')
     compile files('libs/pl2303driver.jar')

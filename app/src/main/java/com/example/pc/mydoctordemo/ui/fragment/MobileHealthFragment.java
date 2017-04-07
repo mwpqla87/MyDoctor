@@ -79,6 +79,9 @@ public class MobileHealthFragment extends BaseFragment {
         listView.setAdapter(adapter);
         adapter.notifyDataSetChanged();
 
+
+
+
         return myView;
     }
 
@@ -92,7 +95,7 @@ public class MobileHealthFragment extends BaseFragment {
      * Initialize list data
      */
     public void setList(){
-        supportThings.add(new SupportThing("Mi band", "test1",R.drawable.miband));
+        supportThings.add(new SupportThing("Miband", "test1",R.drawable.miband));
         supportThings.add(new SupportThing("iHealth", "test2",R.drawable.ihealth));
     }
 
