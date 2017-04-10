@@ -1,5 +1,6 @@
 package com.example.pc.mydoctordemo.ui.fragment;
 
+import android.app.Activity;
 import android.app.FragmentManager;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
@@ -20,6 +21,8 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.example.pc.mydoctordemo.R;
+import com.example.pc.mydoctordemo.ui.activity.MainActivity;
+import com.example.pc.mydoctordemo.ui.heartRateNotifyListener.MyHeartRateNotifyListener;
 import com.example.pc.mydoctordemo.ui.item.CheckedList;
 import com.github.mikephil.charting.charts.PieChart;
 import com.github.mikephil.charting.data.PieData;
@@ -51,8 +54,11 @@ public class MibandControllFragment extends BaseFragment implements View.OnClick
 
     private TextView heart, step, battery;
     private TextView text;
+    private TextView walkView;
     private List<CheckedList> checkList ;
-
+    MyMibandCallBack callback;
+    private MyHeartRateNotifyListener heartRateListener;
+    private ListView listView;
 
 
     static final public int MESSAGE_REDRAW = 1;
@@ -76,109 +82,14 @@ public class MibandControllFragment extends BaseFragment implements View.OnClick
         }
     };
 
-    private HeartrateListener heartrateNotifyListener = new HeartrateListener() {
-        @Override
-        public void onNotify(final int heartRate) {
-            getActivity().runOnUiThread(new Runnable() {
-                @Override
-                public void run() {
-                    Toast.makeText(mContext.getApplicationContext(), heartRate+"bpm",Toast.LENGTH_LONG).show();
-                    System.out.println(heartRate+"bpm");
-                    heart.setText(heartRate + " bpm");
-                    text.append(heartRate + " bpm\n");
-                }
-            });
-        }
-    };
-
-    private final MibandCallback mibandCallback = new MibandCallback() {
-        @Override
-        public void onSuccess(Object data, int status) {
-            switch (status) {
-                case MibandCallback.STATUS_SEARCH_DEVICE:
-                    Log.e(TAG, "성공: STATUS_SEARCH_DEVICE");
-                    miband.connect((BluetoothDevice) data, this);
-                    break;
-                case MibandCallback.STATUS_CONNECT:
-                    Log.e(TAG, "성공: STATUS_CONNECT");
-                    miband.getUserInfo(this);
-                    break;
-                case MibandCallback.STATUS_SEND_ALERT:
-                    Log.e(TAG, "성공: STATUS_SEND_ALERT");
-                    break;
-                case MibandCallback.STATUS_GET_USERINFO:
-                    Log.e(TAG, "성공: STATUS_GET_USERINFO");
-                    UserInfo userInfo = new UserInfo().fromByteData(((BluetoothGattCharacteristic) data).getValue());
-                    miband.setUserInfo(userInfo, this);
-                    break;
-                case MibandCallback.STATUS_SET_USERINFO:
-                    Log.e(TAG, "성공: STATUS_SET_USERINFO");
-                    miband.setHeartRateScanListener(heartrateNotifyListener);
-                    break;
-                case MibandCallback.STATUS_START_HEARTRATE_SCAN:
-                    Log.e(TAG, "성공: STATUS_START_HEARTRATE_SCAN");
-                    break;
-                case MibandCallback.STATUS_GET_BATTERY:
-                    Log.e(TAG, "성공: STATUS_GET_BATTERY");
-                    final int level = (int) data;
-                    getActivity().runOnUiThread(new Runnable() {
-                        @Override
-                        public void run() {
-                            battery.setText(level+ " % battery");
-                            text.append(level + " % battery\n");
-                        }
-                    });
-                    break;
-                case MibandCallback.STATUS_GET_ACTIVITY_DATA:
-                    Log.e(TAG, "성공: STATUS_GET_ACTIVITY_DATA");
-                    final int steps = (int) data;
-                    getActivity().runOnUiThread(new Runnable() {
-                        @Override
-                        public void run() {
-                            step.setText(steps+ " steps");
-                            text.append(steps+ " steps\n");
-                        }
-                    });
-                    break;
-            }
-        }
-
-        @Override
-        public void onFail(int errorCode, String msg, int status) {
-            switch (status) {
-                case MibandCallback.STATUS_SEARCH_DEVICE:
-                    Log.e(TAG, "실패: STATUS_SEARCH_DEVICE");
-                    break;
-                case MibandCallback.STATUS_CONNECT:
-                    Log.e(TAG, "실패: STATUS_CONNECT");
-                    break;
-                case MibandCallback.STATUS_SEND_ALERT:
-                    Log.e(TAG, "실패: STATUS_SEND_ALERT");
-                    break;
-                case MibandCallback.STATUS_GET_USERINFO:
-                    Log.e(TAG, "실패: STATUS_GET_USERINFO");
-                    break;
-                case MibandCallback.STATUS_SET_USERINFO:
-                    Log.e(TAG, "실패: STATUS_SET_USERINFO");
-                    break;
-                case MibandCallback.STATUS_START_HEARTRATE_SCAN:
-                    Log.e(TAG, "실패: STATUS_START_HEARTRATE_SCAN");
-                    break;
-                case MibandCallback.STATUS_GET_BATTERY:
-                    Log.e(TAG, "실패: STATUS_GET_BATTERY");
-                    break;
-                case MibandCallback.STATUS_GET_ACTIVITY_DATA:
-                    Log.e(TAG, "실패: STATUS_GET_ACTIVITY_DATA");
-                    break;
-            }
-        }
-    };
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
+
+        heartRateListener = new MyHeartRateNotifyListener(getActivity());
         checkList = new ArrayList<>();
-        setCheckList();
+
     }
 
     public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, Bundle savedInstanceState) {
@@ -187,23 +98,18 @@ public class MibandControllFragment extends BaseFragment implements View.OnClick
         Log.d(GlobalConstance.LOGCAT_DEFAULT_TAG, "IN onCreateView");
 
 
-//        myView.findViewById(R.id.button_vive).setOnClickListener(this);
-//        myView.findViewById(R.id.button_steps).setOnClickListener(this);
-//        myView.findViewById(R.id.button_realtime_steps).setOnClickListener(this);
-//        myView.findViewById(R.id.button_battery).setOnClickListener(this);
-//        myView.findViewById(R.id.button_heart_start_one).setOnClickListener(this);
-//        myView.findViewById(R.id.button_heart_start_many).setOnClickListener(this);
-//        myView.findViewById(R.id.webview_test).setOnClickListener(this);
-//
-//        heart = (TextView) myView.findViewById(R.id.heart);
-//        step = (TextView) myView.findViewById(R.id.steps);
-//        battery = (TextView) myView.findViewById(R.id.battery);
-        text = (TextView) myView.findViewById(R.id.text);
-        // webView = (WebView) findViewById(R.id.web);
+        myView.findViewById(R.id.get_battery_btn).setOnClickListener(this);
+        myView.findViewById(R.id.find_miband_btn).setOnClickListener(this);
+        myView.findViewById(R.id.get_waling_btn).setOnClickListener(this);
+
+        walkView = (TextView) myView.findViewById(R.id.walkView);
+
+
+
 
         setupPieChart();
 
-        ListView listView = (ListView) myView.findViewById(R.id.miband_checklist);
+        listView = (ListView) myView.findViewById(R.id.miband_checklist);
         listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             FragmentManager fragmentManager = getFragmentManager();
             @Override
@@ -211,9 +117,27 @@ public class MibandControllFragment extends BaseFragment implements View.OnClick
                 Toast.makeText(mContext.getApplicationContext(), checkList.get(position).getListName(),Toast.LENGTH_LONG).show();
             }
         });
-        MibandCheckListAdapter adapter = new MibandCheckListAdapter(checkList);
+        final MibandCheckListAdapter adapter = new MibandCheckListAdapter(checkList);
         listView.setAdapter(adapter);
         adapter.notifyDataSetChanged();
+        listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                if(position == 0){
+                    MainActivity activity = (MainActivity) getActivity();
+                    activity.mibandItemClickCallback(position,miband, callback,heartRateListener);
+                }
+                else{
+//                    Thread.run()
+                    miband.getCurrentSteps(callback);
+
+
+
+
+                }
+
+            }
+        });
 
 
 
@@ -221,30 +145,33 @@ public class MibandControllFragment extends BaseFragment implements View.OnClick
         mBluetoothAdapter = ((BluetoothManager) mContext.getSystemService(Context.BLUETOOTH_SERVICE)).getAdapter();
 
         miband = new Miband(mContext);
+        callback = new MyMibandCallBack(miband, heartRateListener, getActivity(), walkView);
 
-        miband.searchDevice(mBluetoothAdapter, this.mibandCallback);
+        miband.searchDevice(mBluetoothAdapter, callback);
 
         miband.setDisconnectedListener(new NotifyListener() {
             @Override
             public void onNotify(byte[] data) {
-                miband.searchDevice(mBluetoothAdapter, mibandCallback);
+                miband.searchDevice(mBluetoothAdapter, callback);
             }
         });
+
+
+        setCheckList();
+
         return myView;
     }
 
     private void setupPieChart() {
-        float rainfall[] = {98.8f, 123.8f, 161.6f, 24.2f, 52f, 58.2f, 35.4f, 13.8f, 78.4f, 203.4f, 240.2f,
-                159.7f};
-        String monthNames[] = {"Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"};
-        //Populating a list of pie Enrtires
+        float rainfall[] = {500f, 600f};
+        String monthNames[] = {"work", "rest"};
         List<PieEntry> pieEntries = new ArrayList<>();
         for(int i = 0; i < rainfall.length; i++){
             pieEntries.add(new PieEntry(rainfall[i], monthNames[i]));
         }
 
-        PieDataSet dataSet = new PieDataSet(pieEntries, "Rainfall for Vancouver");
-        dataSet.setColors(ColorTemplate.COLORFUL_COLORS);
+        PieDataSet dataSet = new PieDataSet(pieEntries, "   목표");
+        dataSet.setColors(ColorTemplate.LIBERTY_COLORS);
         PieData data = new PieData(dataSet);
 
         //Get the Chart
@@ -256,32 +183,34 @@ public class MibandControllFragment extends BaseFragment implements View.OnClick
     }
 
     @Override
+    public void onActivityCreated(@Nullable Bundle savedInstanceState) {
+        super.onActivityCreated(savedInstanceState);
+    }
+
+    @Override
     public void onClick(View v) {
-//        int i = v.getId();
-//        if (i == R.id.button_vive) {
-//            miband.sendAlert(this.mibandCallback);
-//        } else if (i == R.id.button_steps) {
-//            miband.getCurrentSteps(this.mibandCallback);
-//        } else if (i == R.id.button_realtime_steps) {
-//            miband.setRealtimeStepListener(realtimeStepListener);
-//        } else if (i == R.id.button_battery) {
-//
-//            miband.getBatteryLevel(this.mibandCallback);
-//
-//        } else if (i == R.id.button_heart_start_one) {
-//            miband.startHeartRateScan(1, this.mibandCallback);
-//        } else if (i == R.id.button_heart_start_many) {
-//            miband.startHeartRateScan(0, this.mibandCallback);
-//        }
-//        else if(i == R.id.webview_test){
-//            // webView.setWebViewClient(new WebViewClient());
-//            //webView.loadUrl("http://" + "www.google.com");
-//        }
+        int id = v.getId();
+
+        if(id == R.id.find_miband_btn){
+            miband.sendAlert(callback);
+        }
+        else if(id == R.id.get_battery_btn){
+            miband.getBatteryLevel(callback);
+        }
+        else{
+            miband.getCurrentSteps(callback);
+        }
+
+
     }
     public void setCheckList(){
-        checkList.add(new CheckedList("맥박",R.drawable.miband));
-        checkList.add(new CheckedList("걸음수",R.drawable.ihealth));
+        checkList.add(new CheckedList("맥박",R.drawable.pulse,80));
 
+        checkList.add(new CheckedList("걸음수",R.drawable.walk,100));
+    }
+
+    public void setWalingData(int steps) {
+        Log.e("ABC","전달받은 값"+steps);
     }
 
     public class MibandCheckListAdapter extends BaseAdapter {
@@ -318,14 +247,140 @@ public class MibandControllFragment extends BaseFragment implements View.OnClick
 
             ImageView imageView = (ImageView) itemLayout.findViewById(R.id.imageView2);
             TextView companyName = (TextView) itemLayout.findViewById(R.id.textView2);
-            TextView description = (TextView) itemLayout.findViewById(R.id.description);
+            TextView data = (TextView) itemLayout.findViewById(R.id.textView3);
 
             imageView.setImageResource(checkList.get(position).getImageIcon());
             companyName.setText(checkList.get(position).getListName());
+
+
+            String a = Integer.toString(checkList.get(position).getData());
+            data.setText(a);
 
 
             return itemLayout;
         }
     }
 
+    private void changeWalkingData(int steps) {
+        checkList.get(1).setData(steps);
+        listView.invalidate();
+        MibandCheckListAdapter adapter = new MibandCheckListAdapter(checkList);
+        listView.setAdapter(adapter);
+    }
+
+
+    /**
+     * INNER CLASS CALLBACK
+     */
+    public class MyMibandCallBack implements MibandCallback {
+        private Miband miband;
+        private static final String TAG = "Mobile";
+        private HeartrateListener heartrateNotifyListener;
+        private Activity activity;
+        private int walkingData;
+        private Context mContext;
+        MibandControllFragment controll;
+        TextView walkView;
+
+        public MyMibandCallBack(Miband miband,HeartrateListener heartrateNotifyListener, Activity activity, TextView textView){
+            this.heartrateNotifyListener = heartrateNotifyListener;
+            this.miband = miband;
+            this.activity = activity;
+            this.walkView = textView;
+            this.controll = controll;
+        }
+        public int getWalkingData(){
+            Log.e("ABC",walkingData+"steps1get");
+            return walkingData;
+        }
+
+        @Override
+        public void onSuccess(Object data, int status) {
+            switch (status) {
+                case MibandCallback.STATUS_SEARCH_DEVICE:
+                    Log.e(TAG, "성공: STATUS_SEARCH_DEVICE");
+                    miband.connect((BluetoothDevice) data, this);
+                    break;
+                case MibandCallback.STATUS_CONNECT:
+                    Log.e(TAG, "성공: STATUS_CONNECT");
+                    miband.getUserInfo(this);
+                    break;
+                case MibandCallback.STATUS_SEND_ALERT:
+                    Log.e(TAG, "성공: STATUS_SEND_ALERT");
+                    break;
+                case MibandCallback.STATUS_GET_USERINFO:
+                    Log.e(TAG, "성공: STATUS_GET_USERINFO");
+                    UserInfo userInfo = new UserInfo().fromByteData(((BluetoothGattCharacteristic) data).getValue());
+                    miband.setUserInfo(userInfo, this);
+
+                    break;
+                case MibandCallback.STATUS_SET_USERINFO:
+                    Log.e(TAG, "성공: STATUS_SET_USERINFO");
+                    miband.setHeartRateScanListener(heartrateNotifyListener);
+                    break;
+                case MibandCallback.STATUS_START_HEARTRATE_SCAN:
+                    Log.e(TAG, "성공: STATUS_START_HEARTRATE_SCAN");
+                    break;
+                case MibandCallback.STATUS_GET_BATTERY:
+                    Log.e(TAG, "성공: STATUS_GET_BATTERY");
+                    final int level = (int) data;
+                    activity.runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            Toast.makeText(activity.getApplicationContext(), level + "%", Toast.LENGTH_LONG).show();
+                        }
+                    });
+                    break;
+                case MibandCallback.STATUS_GET_ACTIVITY_DATA:
+                    Log.e(TAG, "성공: STATUS_GET_ACTIVITY_DATA");
+                    final int steps = (int) data;
+                    walkingData = steps;
+                    activity.runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            Toast.makeText(activity.getApplicationContext(), steps + "steps", Toast.LENGTH_LONG).show();
+                            walkView.setText(steps+" steps");
+
+                            changeWalkingData(steps);
+
+                        }
+                    });
+
+
+                    break;
+            }
+
+        }
+
+        @Override
+        public void onFail(int errorCode, String msg, int status) {
+            switch (status) {
+                case MibandCallback.STATUS_SEARCH_DEVICE:
+                    Log.e(TAG, "실패: STATUS_SEARCH_DEVICE");
+                    break;
+                case MibandCallback.STATUS_CONNECT:
+                    Log.e(TAG, "실패: STATUS_CONNECT");
+                    break;
+                case MibandCallback.STATUS_SEND_ALERT:
+                    Log.e(TAG, "실패: STATUS_SEND_ALERT");
+                    break;
+                case MibandCallback.STATUS_GET_USERINFO:
+                    Log.e(TAG, "실패: STATUS_GET_USERINFO");
+                    break;
+                case MibandCallback.STATUS_SET_USERINFO:
+                    Log.e(TAG, "실패: STATUS_SET_USERINFO");
+                    break;
+                case MibandCallback.STATUS_START_HEARTRATE_SCAN:
+                    Log.e(TAG, "실패: STATUS_START_HEARTRATE_SCAN");
+                    break;
+                case MibandCallback.STATUS_GET_BATTERY:
+                    Log.e(TAG, "실패: STATUS_GET_BATTERY");
+                    break;
+                case MibandCallback.STATUS_GET_ACTIVITY_DATA:
+                    Log.e(TAG, "실패: STATUS_GET_ACTIVITY_DATA");
+                    break;
+            }
+        }
+
+    }
 }

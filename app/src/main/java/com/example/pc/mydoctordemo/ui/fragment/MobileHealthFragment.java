@@ -66,6 +66,7 @@ public class MobileHealthFragment extends BaseFragment {
             /**
              * create list view
              */
+
             ListView listView = (ListView) myView.findViewById(R.id.mobile_health_listview);
         listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             FragmentManager fragmentManager = getFragmentManager();

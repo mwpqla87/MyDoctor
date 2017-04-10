@@ -2,9 +2,7 @@ package com.example.pc.mydoctordemo.ui.activity;
 
 import android.app.FragmentManager;
 import android.os.Bundle;
-import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.NavigationView;
-import android.support.design.widget.Snackbar;
 import android.support.v4.view.GravityCompat;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBarDrawerToggle;
@@ -13,15 +11,18 @@ import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
-import android.view.View;
 import android.widget.GridView;
 
 import com.example.pc.mydoctordemo.R;
 import com.example.pc.mydoctordemo.ui.fragment.HomeFragment;
 import com.example.pc.mydoctordemo.ui.fragment.IhealthController;
 import com.example.pc.mydoctordemo.ui.fragment.MibandControllFragment;
+import com.example.pc.mydoctordemo.ui.fragment.MibandPulseManager;
 import com.example.pc.mydoctordemo.ui.fragment.MobileHealthFragment;
+import com.example.pc.mydoctordemo.ui.heartRateNotifyListener.MyHeartRateNotifyListener;
 import com.example.pc.mydoctordemo.ui.item.CheckedList;
+import com.jellygom.miband_sdk.MiBandIO.MibandCallback;
+import com.jellygom.miband_sdk.Miband;
 
 import java.util.ArrayList;
 
@@ -37,6 +38,7 @@ public class MainActivity extends AppCompatActivity
     private Thread.UncaughtExceptionHandler mExceptionHandler;
     private ArrayList<CheckedList> checkedLists;
     private GridView gridView;
+    android.app.FragmentTransaction transaction = getFragmentManager().beginTransaction();
 
 
 
@@ -59,14 +61,7 @@ public class MainActivity extends AppCompatActivity
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
-        FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
-        fab.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                Snackbar.make(view, "Replace with your own action", Snackbar.LENGTH_LONG)
-                        .setAction("Action", null).show();
-            }
-        });
+
 
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
         ActionBarDrawerToggle toggle = new ActionBarDrawerToggle(
@@ -125,13 +120,18 @@ public class MainActivity extends AppCompatActivity
         // Handle navigation view item clicks here.
         int id = item.getItemId();
         FragmentManager fragmentManager = getFragmentManager();
-
+        transaction = fragmentManager.beginTransaction();
         android.app.Fragment fragment;
+
+
 
         switch (id) {
             case R.id.nav_mobile_health:
                 try {
-                    fragmentManager.beginTransaction().replace(R.id.content_frame, MobileHealthFragment.newInstance(getApplicationContext())).commit();
+                    transaction.replace(R.id.content_frame, MobileHealthFragment.newInstance(getApplicationContext()));
+                    transaction.addToBackStack(null);
+                    transaction.commit();
+
                 } catch (Exception e) {
                     Log.d(GlobalConstance.LOGCAT_DEFAULT_TAG, Log.getStackTraceString(e));
                 }
@@ -173,16 +173,23 @@ public class MainActivity extends AppCompatActivity
 
     public void mobileHealthItemClickCallback(int position) {
         FragmentManager fragmentManager = getFragmentManager();
+        transaction = fragmentManager.beginTransaction();
         if(position == 0){
             try {
-                fragmentManager.beginTransaction().replace(R.id.content_frame, MibandControllFragment.newInstance(getApplicationContext())).commit();
+                transaction.replace(R.id.content_frame, MibandControllFragment.newInstance(getApplicationContext()));
+                transaction.addToBackStack("mibandControll");
+                transaction.commit();
+
+
             } catch (Exception e) {
                 Log.d(GlobalConstance.LOGCAT_DEFAULT_TAG, Log.getStackTraceString(e));
             }
         }
         else{
             try {
-                fragmentManager.beginTransaction().replace(R.id.content_frame, IhealthController.newInstance(getApplicationContext())).commit();
+                transaction.replace(R.id.content_frame, IhealthController.newInstance(getApplicationContext()));
+                transaction.addToBackStack(null);
+                transaction.commit();
             } catch (Exception e) {
                 Log.d(GlobalConstance.LOGCAT_DEFAULT_TAG, Log.getStackTraceString(e));
             }
@@ -191,8 +198,11 @@ public class MainActivity extends AppCompatActivity
     }
     public void iHealthItemClickCallback(int position) {
         FragmentManager fragmentManager = getFragmentManager();
+        transaction = fragmentManager.beginTransaction();
         try {
-            fragmentManager.beginTransaction().replace(R.id.content_frame, BP7S.newInstance(getApplicationContext())).commit();
+           transaction.replace(R.id.content_frame, BP7S.newInstance(getApplicationContext()));
+            transaction.addToBackStack(null);
+            transaction.commit();
         } catch (Exception e) {
             Log.d(GlobalConstance.LOGCAT_DEFAULT_TAG, Log.getStackTraceString(e));
         }
@@ -205,5 +215,22 @@ public class MainActivity extends AppCompatActivity
     public void uncaughtException(Thread t, Throwable e) {
         Log.e(GlobalConstance.LOGCAT_DEFAULT_TAG, Log.getStackTraceString(e));
         mExceptionHandler.uncaughtException(t, e);
+    }
+
+    public void mibandItemClickCallback(int position, Miband miband, MibandCallback callback, MyHeartRateNotifyListener heartrateNotifyListener) {
+        FragmentManager fragmentManager = getFragmentManager();
+        transaction = fragmentManager.beginTransaction();
+        if(position == 0){
+            try {
+                transaction.replace(R.id.content_frame, MibandPulseManager.newInstance(getApplicationContext(),miband, callback,heartrateNotifyListener));
+                transaction.addToBackStack(null);
+                transaction.commit();
+            } catch (Exception e) {
+                Log.d(GlobalConstance.LOGCAT_DEFAULT_TAG, Log.getStackTraceString(e));
+            }
+        }
+        else{
+
+        }
     }
 }

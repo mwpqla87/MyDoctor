@@ -9,12 +9,21 @@ public class CheckedList {
     private int imageIcon;
     private int data;
 
+    public CheckedList(String name, int imageIcon, int data){
+       this(name,imageIcon);
+        this.data = data;
+    }
     public CheckedList(String name, int imageIcon){
         this.listName = name;
         this.imageIcon = imageIcon;
     }
 
 
+
+
+    public int getData(){
+        return data;
+    }
 
     public void setData(int data){
         this.data = data;
